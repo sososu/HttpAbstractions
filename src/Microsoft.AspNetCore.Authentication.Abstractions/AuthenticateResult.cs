@@ -31,12 +31,17 @@ namespace Microsoft.AspNetCore.Authentication
         /// <summary>
         /// Additional state values for the authentication session.
         /// </summary>
-        public AuthenticationProperties Properties => Ticket?.Properties;
+        public AuthenticationProperties Properties => Ticket?.Properties ?? Error?.Properties;
 
         /// <summary>
         /// Holds failure information from the authentication.
         /// </summary>
-        public Exception Failure { get; protected set; }
+        public Exception Failure => Error?.Failure;
+
+        /// <summary>
+        /// Holds error information from the authentication.
+        /// </summary>
+        public AuthenticationError Error { get; protected set; }
 
         /// <summary>
         /// Indicates that there was no information returned for this authentication scheme.
@@ -73,7 +78,18 @@ namespace Microsoft.AspNetCore.Authentication
         /// <returns>The result.</returns>
         public static AuthenticateResult Fail(Exception failure)
         {
-            return new AuthenticateResult() { Failure = failure };
+            return new AuthenticateResult() { Error = new AuthenticationError(failure) };
+        }
+
+        /// <summary>
+        /// Indicates that there was a failure during authentication.
+        /// </summary>
+        /// <param name="failure">The failure exception.</param>
+        /// <param name="properties">Additional state values for the authentication session.</param>
+        /// <returns>The result.</returns>
+        public static AuthenticateResult Fail(Exception failure, AuthenticationProperties properties)
+        {
+            return new AuthenticateResult() { Error = new AuthenticationError(failure, properties) };
         }
 
         /// <summary>
@@ -82,8 +98,15 @@ namespace Microsoft.AspNetCore.Authentication
         /// <param name="failureMessage">The failure message.</param>
         /// <returns>The result.</returns>
         public static AuthenticateResult Fail(string failureMessage)
-        {
-            return new AuthenticateResult() { Failure = new Exception(failureMessage) };
-        }
+            => Fail(new Exception(failureMessage));
+
+        /// <summary>
+        /// Indicates that there was a failure during authentication.
+        /// </summary>
+        /// <param name="failureMessage">The failure message.</param>
+        /// <param name="properties">Additional state values for the authentication session.</param>
+        /// <returns>The result.</returns>
+        public static AuthenticateResult Fail(string failureMessage, AuthenticationProperties properties)
+            => Fail(new Exception(failureMessage), properties);
     }
 }
