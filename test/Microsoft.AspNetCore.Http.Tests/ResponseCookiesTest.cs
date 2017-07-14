@@ -1,10 +1,9 @@
 // Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-using System.Text;
 using Microsoft.AspNetCore.Http.Internal;
-using Microsoft.Extensions.ObjectPool;
 using Microsoft.Net.Http.Headers;
+using System;
 using Xunit;
 
 namespace Microsoft.AspNetCore.Http.Tests
@@ -42,6 +41,23 @@ namespace Microsoft.AspNetCore.Http.Tests
             Assert.StartsWith(testcookie, cookieHeaderValues[0]);
             Assert.Contains("path=/", cookieHeaderValues[0]);
             Assert.Contains("expires=Thu, 01 Jan 1970 00:00:00 GMT", cookieHeaderValues[0]);
+        }
+
+        [Fact]
+        public void ProvidesMaxAgeWithCookieOptionsArgumentExpectMaxAgeToBeSet()
+        {
+            var headers = new HeaderDictionary();
+            var cookies = new ResponseCookies(headers, null);
+            var cookieOptions = new CookieOptions();
+            var maxAgeTime = TimeSpan.FromHours(1);
+            cookieOptions.MaxAge = TimeSpan.FromHours(1);
+            var testcookie = "TestCookie";
+
+            cookies.Append(testcookie, testcookie, cookieOptions);
+
+            var cookieHeaderValues = headers[HeaderNames.SetCookie];
+            Assert.Equal(1, cookieHeaderValues.Count);
+            Assert.Contains("max-age=", cookieHeaderValues[0]);
         }
 
         public static TheoryData EscapesKeyValuesBeforeSettingCookieData
