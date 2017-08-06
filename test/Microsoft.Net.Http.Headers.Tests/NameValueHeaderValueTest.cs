@@ -575,6 +575,49 @@ namespace Microsoft.Net.Http.Headers
             Assert.False(NameValueHeaderValue.TryParseStrictList(inputs, out results));
         }
 
+        [Theory]
+        [InlineData("value", "value")]
+        [InlineData("\"value\"", "value")]
+        [InlineData("\"quoted value\"", "quoted value")]
+        public void TestGetDecodedValueThroughConstructor_ReturnTrue(string input, string expected)
+        {
+            var header = new NameValueHeaderValue("test", input);
+
+            var actual = header.GetDecodedValue();
+
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [InlineData("value", "value")]
+        [InlineData("\"value\"", "value")]
+        [InlineData("\"quoted value\"", "quoted value")]
+        public void TestGetDecodedValueThroughProperty_ReturnTrue(string input, string expected)
+        {
+            var header = new NameValueHeaderValue("test");
+            header.Value = input;
+
+            var actual = header.GetDecodedValue();
+
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [InlineData("value")]
+        [InlineData("\"value\"")]
+        [InlineData("\"quoted value\"")]
+        public void TestSetAndEncodeValueRoundTrip_ReturnTrue(string input)
+        {
+            var header = new NameValueHeaderValue("test");
+            header.Value = input;
+            var valueHeader = header.GetDecodedValue();
+            header.SetAndEncodeValue(valueHeader);
+
+            var actual = header.Value;
+
+            Assert.Equal(input, actual);
+        }
+
         #region Helper methods
 
         private void CheckValidParse(string input, NameValueHeaderValue expectedResult)

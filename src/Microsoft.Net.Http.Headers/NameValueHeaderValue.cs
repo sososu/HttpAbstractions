@@ -21,6 +21,9 @@ namespace Microsoft.Net.Http.Headers
 
         private StringSegment _name;
         private StringSegment _value;
+        private bool _quotedValue;
+        // private StringSegment _encodedValue;
+
         private bool _isReadOnly;
 
         private NameValueHeaderValue()
@@ -39,6 +42,7 @@ namespace Microsoft.Net.Http.Headers
 
             _name = name;
             _value = value;
+            _quotedValue = HeaderUtilities.IsQuoted(value);
         }
 
         public StringSegment Name
@@ -54,6 +58,7 @@ namespace Microsoft.Net.Http.Headers
                 HeaderUtilities.ThrowIfReadOnly(IsReadOnly);
                 CheckValueFormat(value);
                 _value = value;
+                _quotedValue = HeaderUtilities.IsQuoted(value);
             }
         }
 
@@ -140,6 +145,20 @@ namespace Microsoft.Net.Http.Headers
             {
                 return (_value.Equals(other._value, StringComparison.OrdinalIgnoreCase));
             }
+        }
+
+        public StringSegment GetDecodedValue()
+        {
+            return HeaderUtilities.RemoveQuotes(_value);
+        }
+
+        public void SetAndEncodeValue(StringSegment value)
+        {
+            if (_quotedValue)
+            {
+                value = $"\"{value}\"";
+            }
+            Value = value;
         }
 
         public static NameValueHeaderValue Parse(StringSegment input)
@@ -286,7 +305,10 @@ namespace Microsoft.Net.Http.Headers
             // Use parameterless ctor to avoid double-parsing of name and value, i.e. skip public ctor validation.
             parsedValue = new NameValueHeaderValue();
             parsedValue._name = name;
-            parsedValue._value = input.Subsegment(current, valueLength);
+            var value = input.Subsegment(current, valueLength);
+            parsedValue._value = value;
+            parsedValue._quotedValue = HeaderUtilities.IsQuoted(value);
+
             current = current + valueLength;
             current = current + HttpRuleParser.GetWhitespaceLength(input, current); // skip whitespaces
             return current - startIndex;

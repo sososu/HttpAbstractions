@@ -601,6 +601,11 @@ namespace Microsoft.Net.Http.Headers
             return input;
         }
 
+        public static bool IsQuoted(StringSegment input)
+        {
+            return !StringSegment.IsNullOrEmpty(input) && input.Length >= 2 && input[0] == '"' && input[input.Length - 1] == '"';
+        }
+
         internal static void ThrowIfReadOnly(bool isReadOnly)
         {
             if (isReadOnly)
