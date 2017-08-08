@@ -21,7 +21,6 @@ namespace Microsoft.Net.Http.Headers
 
         private StringSegment _name;
         private StringSegment _value;
-
         private bool _isReadOnly;
 
         private NameValueHeaderValue()
@@ -317,9 +316,7 @@ namespace Microsoft.Net.Http.Headers
             // Use parameterless ctor to avoid double-parsing of name and value, i.e. skip public ctor validation.
             parsedValue = new NameValueHeaderValue();
             parsedValue._name = name;
-            var value = input.Subsegment(current, valueLength);
-            parsedValue._value = value;
-
+            parsedValue._value = input.Subsegment(current, valueLength);
             current = current + valueLength;
             current = current + HttpRuleParser.GetWhitespaceLength(input, current); // skip whitespaces
             return current - startIndex;
