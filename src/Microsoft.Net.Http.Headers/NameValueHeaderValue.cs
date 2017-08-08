@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Text;
 using Microsoft.Extensions.Primitives;
 
@@ -148,7 +149,7 @@ namespace Microsoft.Net.Http.Headers
             {
                 return _value;
             }
-            return HeaderUtilities.DecodeEscapeCharacters(HeaderUtilities.RemoveQuotes(_value));
+            return HeaderUtilities.DecodeQuotedString(_value);
         }
 
         public void SetAndEncodeValue(StringSegment value)
@@ -159,10 +160,10 @@ namespace Microsoft.Net.Http.Headers
             }
             else
             {
-                var encodedValue = $"\"{HeaderUtilities.EncodeEscapeCharacters(value)}\"";
+                var encodedValue = HeaderUtilities.EscapeAsQuotedString(value);
                 if (GetValueLength(encodedValue, 0) != encodedValue.Length)
                 {
-                    throw new FormatException(string.Format(System.Globalization.CultureInfo.InvariantCulture, "The header value is invalid: '{0}'", value));
+                    throw new FormatException(string.Format(CultureInfo.InvariantCulture, "The header value is invalid: '{0}'", value));
                 }
                 _value = encodedValue;
             }

@@ -580,7 +580,7 @@ namespace Microsoft.Net.Http.Headers
         [InlineData("\"value\"", "value")]
         [InlineData("\"quoted value\"", "quoted value")]
         [InlineData("\"quoted\\\"valuewithquote\"", "quoted\"valuewithquote")]
-        public void TestGetDecodedValue_ReturnsExpectedValue(string input, string expected)
+        public void GetDecodedValue_ReturnsExpectedValue(string input, string expected)
         {
             var header = new NameValueHeaderValue("test", input);
 
@@ -595,7 +595,7 @@ namespace Microsoft.Net.Http.Headers
         [InlineData("\"assumes already encoded \\\"\"", "\"assumes already encoded \\\"\"")]
         [InlineData("unquoted \"value", "\"unquoted \\\"value\"")]
         [InlineData("value\\morevalues\\evenmorevalues", "\"value\\\\morevalues\\\\evenmorevalues\"")]
-        public void TestSetAndEncodeValue_ReturnsExpectedValue(string input, string expected)
+        public void SetAndEncodeValueIfRequired_ReturnsExpectedValue(string input, string expected)
         {
             var header = new NameValueHeaderValue("test");
             header.SetAndEncodeValue(input);
@@ -609,7 +609,7 @@ namespace Microsoft.Net.Http.Headers
         [InlineData("value")]
         [InlineData("\"value\\\\morevalues\\\\evenmorevalues\"")]
         [InlineData("\"quoted \\\"value\"")]
-        public void TestGetAndSetEncodeValueRoundTrip(string input)
+        public void GetAndSetEncodeValueRoundTrip(string input)
         {
             var header = new NameValueHeaderValue("test");
             header.Value = input;

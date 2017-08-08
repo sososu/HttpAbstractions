@@ -212,26 +212,26 @@ namespace Microsoft.Net.Http.Headers
         }
 
         [Theory]
-        [InlineData("hello\\\\", "hello\\")]
-        [InlineData("hello\\\"", "hello\"")]
-        [InlineData("hello\\\\what\\\\", "hello\\what\\")]
+        [InlineData("\"hello\\\\\"", "hello\\")]
+        [InlineData("\"hello\\\"\"", "hello\"")]
+        [InlineData("\"hello\\\\what\\\\\"", "hello\\what\\")]
         [InlineData("hello\\\"foo\\\\bar\\\\baz\\\\", "hello\"foo\\bar\\baz\\")]
         [InlineData("hello\\nfoo", "hello\\nfoo")]
-        [InlineData(@"hello\\more", @"hello\more")]
+        [InlineData("\"hello\"", "hello")]
         [InlineData("hello", "hello")]
-        public void TryDecodeValueWithEscapeCharacters_Succeeds(string value, string expected)
+        public void DecodeValueWithEscapeCharacters_Succeeds(string value, string expected)
         {
-            var actual = HeaderUtilities.DecodeEscapeCharacters(value);
+            var actual = HeaderUtilities.DecodeQuotedString(value);
             Assert.Equal(expected, actual);
         }
 
         [Theory]
-        [InlineData("hello\\", "hello\\\\")]
-        [InlineData("hello\\what\\", "hello\\\\what\\\\")]
-        [InlineData("hello\\n", "hello\\\\n")]
-        public void TryEncodeValueWithEscapeCharacters_Succeeds(string value, string expected)
+        [InlineData("hello\\", "\"hello\\\\\"")]
+        [InlineData("hello\\what\\", "\"hello\\\\what\\\\\"")]
+        [InlineData("hello\\n", "\"hello\\\\n\"")]
+        public void EncodeValueWithEscapeCharacters_Succeeds(string value, string expected)
         {
-            var actual = HeaderUtilities.EncodeEscapeCharacters(value);
+            var actual = HeaderUtilities.EscapeAsQuotedString(value);
             Assert.Equal(expected, actual);
         }
     }
