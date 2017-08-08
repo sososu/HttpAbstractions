@@ -153,10 +153,6 @@ namespace Microsoft.Net.Http.Headers
 
         public void SetAndEncodeValue(StringSegment value)
         {
-            // validate is a token
-            // if not token, is it a quoted string?
-            // if not quoted string, add quotes and escape chars
-            // validate as quoted string, throw if not valid
             if (StringSegment.IsNullOrEmpty(value) || (GetValueLength(value, 0) == value.Length))
             {
                 _value = value;
