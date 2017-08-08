@@ -210,5 +210,29 @@ namespace Microsoft.Net.Http.Headers
             Assert.True(HeaderUtilities.TryParseNonNegativeInt32(valueString, out value));
             Assert.Equal(expected, value);
         }
+
+        [Theory]
+        [InlineData("hello\\\\", "hello\\")]
+        [InlineData("hello\\\"", "hello\"")]
+        [InlineData("hello\\\\what\\\\", "hello\\what\\")]
+        [InlineData("hello\\\"foo\\\\bar\\\\baz\\\\", "hello\"foo\\bar\\baz\\")]
+        [InlineData("hello\\nfoo", "hello\\nfoo")]
+        [InlineData(@"hello\\more", @"hello\more")]
+        [InlineData("hello", "hello")]
+        public void TryDecodeValueWithEscapeCharacters_Succeeds(string value, string expected)
+        {
+            var actual = HeaderUtilities.DecodeEscapeCharacters(value);
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [InlineData("hello\\", "hello\\\\")]
+        [InlineData("hello\\what\\", "hello\\\\what\\\\")]
+        [InlineData("hello\\n", "hello\\\\n")]
+        public void TryEncodeValueWithEscapeCharacters_Succeeds(string value, string expected)
+        {
+            var actual = HeaderUtilities.EncodeEscapeCharacters(value);
+            Assert.Equal(expected, actual);
+        }
     }
 }

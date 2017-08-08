@@ -579,7 +579,8 @@ namespace Microsoft.Net.Http.Headers
         [InlineData("value", "value")]
         [InlineData("\"value\"", "value")]
         [InlineData("\"quoted value\"", "quoted value")]
-        public void TestGetDecodedValueThroughConstructor_ReturnTrue(string input, string expected)
+        [InlineData("\"quoted\\\"valuewithquote\"", "quoted\"valuewithquote")]
+        public void TestGetDecodedValue_ReturnsExpectedValue(string input, string expected)
         {
             var header = new NameValueHeaderValue("test", input);
 
@@ -590,23 +591,25 @@ namespace Microsoft.Net.Http.Headers
 
         [Theory]
         [InlineData("value", "value")]
-        [InlineData("\"value\"", "value")]
-        [InlineData("\"quoted value\"", "quoted value")]
-        public void TestGetDecodedValueThroughProperty_ReturnTrue(string input, string expected)
+        [InlineData("\"value\"", "\"value\"")]
+        [InlineData("\"assumes already encoded \\\"\"", "\"assumes already encoded \\\"\"")]
+        [InlineData("unquoted \"value", "\"unquoted \\\"value\"")]
+        [InlineData("value\\morevalues\\evenmorevalues", "\"value\\\\morevalues\\\\evenmorevalues\"")]
+        public void TestSetAndEncodeValue_ReturnsExpectedValue(string input, string expected)
         {
             var header = new NameValueHeaderValue("test");
-            header.Value = input;
+            header.SetAndEncodeValue(input);
 
-            var actual = header.GetDecodedValue();
+            var actual = header.Value;
 
             Assert.Equal(expected, actual);
         }
 
         [Theory]
         [InlineData("value")]
-        [InlineData("\"value\"")]
-        [InlineData("\"quoted value\"")]
-        public void TestSetAndEncodeValueRoundTrip_ReturnTrue(string input)
+        [InlineData("\"value\\\\morevalues\\\\evenmorevalues\"")]
+        [InlineData("\"quoted \\\"value\"")]
+        public void TestGetAndSetEncodeValueRoundTrip(string input)
         {
             var header = new NameValueHeaderValue("test");
             header.Value = input;

@@ -21,8 +21,6 @@ namespace Microsoft.Net.Http.Headers
 
         private StringSegment _name;
         private StringSegment _value;
-        private bool _quotedValue;
-        // private StringSegment _encodedValue;
 
         private bool _isReadOnly;
 
@@ -42,7 +40,6 @@ namespace Microsoft.Net.Http.Headers
 
             _name = name;
             _value = value;
-            _quotedValue = HeaderUtilities.IsQuoted(value);
         }
 
         public StringSegment Name
@@ -58,7 +55,6 @@ namespace Microsoft.Net.Http.Headers
                 HeaderUtilities.ThrowIfReadOnly(IsReadOnly);
                 CheckValueFormat(value);
                 _value = value;
-                _quotedValue = HeaderUtilities.IsQuoted(value);
             }
         }
 
@@ -149,16 +145,32 @@ namespace Microsoft.Net.Http.Headers
 
         public StringSegment GetDecodedValue()
         {
-            return HeaderUtilities.RemoveQuotes(_value);
+            if (!HeaderUtilities.IsQuoted(_value))
+            {
+                return _value;
+            }
+            return HeaderUtilities.DecodeEscapeCharacters(HeaderUtilities.RemoveQuotes(_value));
         }
 
         public void SetAndEncodeValue(StringSegment value)
         {
-            if (_quotedValue)
+            // validate is a token
+            // if not token, is it a quoted string?
+            // if not quoted string, add quotes and escape chars
+            // validate as quoted string, throw if not valid
+            if (StringSegment.IsNullOrEmpty(value) || (GetValueLength(value, 0) == value.Length))
             {
-                value = $"\"{value}\"";
+                _value = value;
             }
-            Value = value;
+            else
+            {
+                var encodedValue = $"\"{HeaderUtilities.EncodeEscapeCharacters(value)}\"";
+                if (GetValueLength(encodedValue, 0) != encodedValue.Length)
+                {
+                    throw new FormatException(string.Format(System.Globalization.CultureInfo.InvariantCulture, "The header value is invalid: '{0}'", value));
+                }
+                _value = encodedValue;
+            }
         }
 
         public static NameValueHeaderValue Parse(StringSegment input)
@@ -307,7 +319,6 @@ namespace Microsoft.Net.Http.Headers
             parsedValue._name = name;
             var value = input.Subsegment(current, valueLength);
             parsedValue._value = value;
-            parsedValue._quotedValue = HeaderUtilities.IsQuoted(value);
 
             current = current + valueLength;
             current = current + HttpRuleParser.GetWhitespaceLength(input, current); // skip whitespaces

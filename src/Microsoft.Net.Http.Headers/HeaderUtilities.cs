@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using System.Text;
 using Microsoft.Extensions.Primitives;
 
 namespace Microsoft.Net.Http.Headers
@@ -594,7 +595,7 @@ namespace Microsoft.Net.Http.Headers
 
         public static StringSegment RemoveQuotes(StringSegment input)
         {
-            if (!StringSegment.IsNullOrEmpty(input) && input.Length >= 2 && input[0] == '"' && input[input.Length - 1] == '"')
+            if (IsQuoted(input))
             {
                 input = input.Subsegment(1, input.Length - 2);
             }
@@ -604,6 +605,69 @@ namespace Microsoft.Net.Http.Headers
         public static bool IsQuoted(StringSegment input)
         {
             return !StringSegment.IsNullOrEmpty(input) && input.Length >= 2 && input[0] == '"' && input[input.Length - 1] == '"';
+        }
+
+        public static StringSegment DecodeEscapeCharacters(StringSegment input)
+        {
+            var stringBuilder = new StringBuilder();
+            var previousSubstring = 0; // To minimize number of calls to append.
+
+            for (var i = 0; i < input.Length; i++)
+            {
+                if (input[i] == '\\')
+                {
+                    if (i >= input.Length - 1)
+                    {
+                        throw new FormatException(string.Format(CultureInfo.InvariantCulture, "Trailing slash at the end of string {0}.", input));
+                    }
+
+                    if (input[i + 1] != '\\' && input[i + 1] != '\"')
+                    {
+                        continue;
+                    }
+
+                    stringBuilder.Append(input.Substring(previousSubstring, i - previousSubstring));
+                    stringBuilder.Append(input[i + 1]);
+                    previousSubstring = i + 2;
+                    i++;
+                }
+            }
+
+            if (stringBuilder.Length != 0)
+            {
+                stringBuilder.Append(input.Substring(previousSubstring, input.Length - previousSubstring));
+                return stringBuilder.ToString();
+            }
+            else
+            {
+                return input;
+            }
+        }
+
+        public static StringSegment EncodeEscapeCharacters(StringSegment input)
+        {
+            var stringBuilder = new StringBuilder();
+            var previousSubstring = 0;
+
+            for (var i = 0; i < input.Length; i++)
+            {
+                if (input[i] == '\\' || input[i] == '\"')
+                {
+                    stringBuilder.Append(input.Substring(previousSubstring, i - previousSubstring));
+                    stringBuilder.Append('\\');
+                    previousSubstring = i;
+                }
+            }
+
+            if (stringBuilder.Length != 0)
+            {
+                stringBuilder.Append(input.Substring(previousSubstring, input.Length - previousSubstring));
+                return stringBuilder.ToString();
+            }
+            else
+            {
+                return input;
+            }
         }
 
         internal static void ThrowIfReadOnly(bool isReadOnly)
