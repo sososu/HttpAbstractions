@@ -608,15 +608,15 @@ namespace Microsoft.Net.Http.Headers
         }
 
         // See https://tools.ietf.org/html/rfc2616#section-2.2
-        public static StringSegment DecodeQuotedString(StringSegment input)
+        public static StringSegment UnescapeAsQuotedString(StringSegment input)
         {
             input = RemoveQuotes(input);
-            var stringBuilder = new StringBuilder(input.Length);
 
             if (input.IndexOf('\\') == -1)
             {
                 return input;
             }
+            var stringBuilder = new StringBuilder(input.Length);
 
             for (var i = 0; i < input.Length; i++)
             {
@@ -638,8 +638,9 @@ namespace Microsoft.Net.Http.Headers
         // See https://tools.ietf.org/html/rfc2616#section-2.2
         public static StringSegment EscapeAsQuotedString(StringSegment input)
         {
-            var stringBuilder = new StringBuilder(input.Length * 2);  // worst case the string size doubles as every character must be escaped.
+            StringBuilder stringBuilder = new StringBuilder(input.Length * 2 + 2);  // worst case the string size doubles as every character must be escaped.
             stringBuilder.Append('\"');
+            
             for (var i = 0; i < input.Length; i++)
             {
                 if (input[i] == '\\' || input[i] == '\"')
