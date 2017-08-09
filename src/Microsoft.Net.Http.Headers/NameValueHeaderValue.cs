@@ -143,16 +143,16 @@ namespace Microsoft.Net.Http.Headers
             }
         }
 
-        public StringSegment GetDecodedValue()
+        public StringSegment GetUnescapeValue()
         {
             if (!HeaderUtilities.IsQuoted(_value))
             {
                 return _value;
             }
-            return HeaderUtilities.DecodeQuotedString(_value);
+            return UnescapeAsQuotedString(_value);
         }
 
-        public void SetAndEncodeValue(StringSegment value)
+        public void SetAndEscapeValue(StringSegment value)
         {
             if (StringSegment.IsNullOrEmpty(value) || (GetValueLength(value, 0) == value.Length))
             {
@@ -160,7 +160,7 @@ namespace Microsoft.Net.Http.Headers
             }
             else
             {
-                var encodedValue = HeaderUtilities.EscapeAsQuotedString(value);
+                var encodedValue = EscapeAsQuotedString(value);
                 if (GetValueLength(encodedValue, 0) != encodedValue.Length)
                 {
                     throw new FormatException(string.Format(CultureInfo.InvariantCulture, "The header value is invalid: '{0}'", value));
@@ -424,6 +424,73 @@ namespace Microsoft.Net.Http.Headers
         private static NameValueHeaderValue CreateNameValue()
         {
             return new NameValueHeaderValue();
+        }
+
+        // See https://tools.ietf.org/html/rfc2616#section-2.2
+        private static StringSegment UnescapeAsQuotedString(StringSegment input)
+        {
+            // TODO decide if these methods should be here on in NVHV
+            input = HeaderUtilities.RemoveQuotes(input);
+
+            if (input.IndexOf('\\') == -1)
+            {
+                return input;
+            }
+            var stringBuilder = new InplaceStringBuilder(input.Length);
+
+            for (var i = 0; i < input.Length; i++)
+            {
+                if (input[i] == '\\')
+                {
+                    if (input[i + 1] == '\\')
+                    {
+                        stringBuilder.Append(input[i + 1]);
+                        i++;
+                        continue;
+                    }
+                }
+                stringBuilder.Append(input[i]);
+            }
+
+            return stringBuilder.ToString();
+        }
+
+        // See https://tools.ietf.org/html/rfc2616#section-2.2
+        private static StringSegment EscapeAsQuotedString(StringSegment input)
+        {
+            // First calculate the number of slashes in string
+            var backslashCount = CountBackslahes(input);
+            if (backslashCount == 0)
+            {
+                return input;
+            }
+
+            var stringBuilder = new InplaceStringBuilder(input.Length + backslashCount + 2); // 2 for quotes
+            stringBuilder.Append('\"');
+
+            for (var i = 0; i < input.Length; i++)
+            {
+                if (input[i] == '\\' || input[i] == '\"')
+                {
+                    stringBuilder.Append('\\');
+                }
+                stringBuilder.Append(input[i]);
+            }
+            stringBuilder.Append('\"');
+            return stringBuilder.ToString();
+        }
+
+        private static int CountBackslahes(StringSegment input)
+        {
+            var count = 0;
+            for (var i = 0; i < input.Length; i++)
+            {
+                if (input[i] == '\\' || input[i] == '\"')
+                {
+                    count++;
+                }
+            }
+            return count;
         }
     }
 }

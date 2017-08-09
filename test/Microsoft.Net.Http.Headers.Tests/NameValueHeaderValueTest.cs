@@ -584,7 +584,7 @@ namespace Microsoft.Net.Http.Headers
         {
             var header = new NameValueHeaderValue("test", input);
 
-            var actual = header.GetDecodedValue();
+            var actual = header.GetUnescapeValue();
 
             Assert.Equal(expected, actual);
         }
@@ -598,7 +598,7 @@ namespace Microsoft.Net.Http.Headers
         public void SetAndEncodeValueIfRequired_ReturnsExpectedValue(string input, string expected)
         {
             var header = new NameValueHeaderValue("test");
-            header.SetAndEncodeValue(input);
+            header.SetAndEscapeValue(input);
 
             var actual = header.Value;
 
@@ -613,8 +613,8 @@ namespace Microsoft.Net.Http.Headers
         {
             var header = new NameValueHeaderValue("test");
             header.Value = input;
-            var valueHeader = header.GetDecodedValue();
-            header.SetAndEncodeValue(valueHeader);
+            var valueHeader = header.GetUnescapeValue();
+            header.SetAndEscapeValue(valueHeader);
 
             var actual = header.Value;
 

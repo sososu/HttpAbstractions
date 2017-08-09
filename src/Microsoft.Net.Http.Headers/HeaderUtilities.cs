@@ -607,53 +607,6 @@ namespace Microsoft.Net.Http.Headers
             return !StringSegment.IsNullOrEmpty(input) && input.Length >= 2 && input[0] == '"' && input[input.Length - 1] == '"';
         }
 
-        // See https://tools.ietf.org/html/rfc2616#section-2.2
-        public static StringSegment UnescapeAsQuotedString(StringSegment input)
-        {
-            input = RemoveQuotes(input);
-
-            if (input.IndexOf('\\') == -1)
-            {
-                return input;
-            }
-            var stringBuilder = new StringBuilder(input.Length);
-
-            for (var i = 0; i < input.Length; i++)
-            {
-                if (input[i] == '\\')
-                {
-                    if (input[i + 1] == '\\' || input[i + 1] == '\"')
-                    {
-                        stringBuilder.Append(input[i + 1]);
-                        i++;
-                        continue;
-                    }
-                }
-                stringBuilder.Append(input[i]);
-            }
-
-            return stringBuilder.ToString();
-        }
-
-        // See https://tools.ietf.org/html/rfc2616#section-2.2
-        public static StringSegment EscapeAsQuotedString(StringSegment input)
-        {
-            StringBuilder stringBuilder = new StringBuilder(input.Length * 2 + 2);  // worst case the string size doubles as every character must be escaped.
-            stringBuilder.Append('\"');
-            
-            for (var i = 0; i < input.Length; i++)
-            {
-                if (input[i] == '\\' || input[i] == '\"')
-                {
-                    stringBuilder.Append('\\');
-                }
-                stringBuilder.Append(input[i]);
-            }
-            stringBuilder.Append('\"');
-
-            return stringBuilder.ToString();
-        }
-
         internal static void ThrowIfReadOnly(bool isReadOnly)
         {
             if (isReadOnly)
